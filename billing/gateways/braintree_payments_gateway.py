@@ -1,7 +1,7 @@
 from billing import Gateway
 from billing.gateway import InvalidData
 from billing.signals import *
-from billing.utils.credit_card import InvalidCard, Visa, MasterCard, \
+from billing.utils.credit_card import InvalidCard, CreditCard, Visa, MasterCard, \
     AmericanExpress, Discover
 from django.conf import settings
 import braintree
@@ -101,17 +101,22 @@ class BraintreePaymentsGateway(Gateway):
     def purchase(self, money, credit_card, options = None):
         if not options:
             options = {}
-        if not self.validate_card(credit_card):
+        if isinstance(credit_card, CreditCard) and not self.validate_card(credit_card):
             raise InvalidCard("Invalid Card")
 
         request_hash = self._build_request_hash(options)
         request_hash["amount"] = money
-        request_hash["credit_card"] = {
-            "number": credit_card.number,
-            "expiration_date": self._cc_expiration_date(credit_card),
-            "cardholder_name": self._cc_cardholder_name(credit_card),
-            "cvv": credit_card.verification_value,
-            }
+        
+        if isinstance(credit_card, CreditCard):
+            request_hash["credit_card"] = {
+                "number": credit_card.number,
+                "expiration_date": self._cc_expiration_date(credit_card),
+                "cardholder_name": self._cc_cardholder_name(credit_card),
+                "cvv": credit_card.verification_value,
+                }
+        else:
+            request_hash["payment_method_token"] = credit_card
+
         braintree_options = options.get("options", {})
         braintree_options.update({"submit_for_settlement": True})
         request_hash.update({
