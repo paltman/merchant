@@ -107,6 +107,9 @@ class BraintreePaymentsGateway(Gateway):
         request_hash = self._build_request_hash(options)
         request_hash["amount"] = money
         
+        if options.get("merchant_account_id"):
+            request_hash["merchant_account_id"] = options.get("merchant_account_id")
+        
         if isinstance(credit_card, CreditCard):
             request_hash["credit_card"] = {
                 "number": credit_card.number,
