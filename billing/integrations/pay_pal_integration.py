@@ -5,6 +5,7 @@ from django.conf.urls.defaults import patterns, include
 from paypal.standard.ipn.signals import payment_was_flagged, payment_was_successful
 from billing.signals import transaction_was_successful, transaction_was_unsuccessful
 
+
 class PayPalIntegration(Integration):
     def __init__(self):
         # Required Fields. Just a template for the user
@@ -29,15 +30,17 @@ class PayPalIntegration(Integration):
             )
         return urlpatterns
 
+
 def unsuccessful_txn_handler(sender, **kwargs):
-    transaction_was_unsuccesful.send(sender=sender.__class__,
+    transaction_was_unsuccessful.send(sender=sender.__class__,
                                      type="purchase",
-                                     response=self)
+                                     response=None)
+
 
 def successful_txn_handler(sender, **kwargs):
-    transaction_was_succesful.send(sender=sender.__class__,
+    transaction_was_successful.send(sender=sender.__class__,
                                    type="purchase",
-                                   response=self)
+                                   response=None)
 
 payment_was_flagged.connect(unsuccessful_txn_handler)
 payment_was_successful.connect(successful_txn_handler)
